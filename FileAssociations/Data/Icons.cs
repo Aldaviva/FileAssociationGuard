@@ -1,4 +1,4 @@
-﻿namespace FileAssociationGuard.Data {
+﻿namespace FileAssociations.Data {
 
     /// <remarks>
     ///     <para>

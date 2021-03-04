@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Security.AccessControl;
 using System.Security.Principal;
-using FileAssociationGuard.Data;
+using FileAssociations.Data;
 using Microsoft.Win32;
 
-namespace FileAssociationGuard {
+namespace FileAssociations {
 
-    internal static class FileAssociationGuard {
+    internal static class FileAssociationService {
 
         private const string DEFAULTICON = "DefaultIcon";
         private const string SHELL       = "shell";
@@ -14,12 +14,12 @@ namespace FileAssociationGuard {
         private const string USERCHOICE  = "UserChoice";
         private const string ICON        = "Icon";
 
-        private const bool DRY_RUN = true;
+        private const bool DRY_RUN = false;
 
         private static readonly IdentityReference CURRENT_USER_IDENTITY = WindowsIdentity.GetCurrent().User!.Translate(typeof(SecurityIdentifier));
 
         public static void Main() {
-            foreach (var association in FileAssociations.ASSOCIATIONS) {
+            foreach (var association in Data.FileAssociations.ASSOCIATIONS) {
                 applyFileAssociation(association);
 
                 foreach (string extension in association.extensions) {

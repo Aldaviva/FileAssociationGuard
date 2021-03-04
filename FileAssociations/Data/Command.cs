@@ -1,4 +1,4 @@
-﻿namespace FileAssociationGuard.Data {
+﻿namespace FileAssociations.Data {
 
     public class Command {
 

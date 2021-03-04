@@ -5,6 +5,11 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
+    <Authors>Ben Hutchison</Authors>
+    <Company>Ben Hutchison</Company>
+    <Copyright>© 2021 Ben Hutchison</Copyright>
+    <Description>File Associations</Description>
+    <ApplicationIcon>pifmgr_15.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>

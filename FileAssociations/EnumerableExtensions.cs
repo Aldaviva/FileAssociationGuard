@@ -3,7 +3,7 @@ using System.Linq;
 
 // ReSharper disable InconsistentNaming - library functions that are supposed to look like Linq methods, which user UpperCase naming.
 
-namespace FileAssociationGuard {
+namespace FileAssociations {
 
     public static class EnumerableExtensions {
 

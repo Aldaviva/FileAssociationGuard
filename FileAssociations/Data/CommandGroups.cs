@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace FileAssociationGuard.Data {
+namespace FileAssociations.Data {
 
     public readonly struct CommandGroups {
 

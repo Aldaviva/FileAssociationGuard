@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using Microsoft.Win32;
 
-namespace FileAssociationGuard.Data {
+namespace FileAssociations.Data {
 
     public readonly struct ApplicationPaths {
 
