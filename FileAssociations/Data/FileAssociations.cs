@@ -22,7 +22,7 @@ namespace FileAssociations.Data {
             // Images
             new(".ai", "Ben.Image.AI", "Illustrator Document", Icons.AI, CommandGroups.VECTOR_IMAGE),
             new(".bmp", "Ben.Image.BMP", "Bitmap", Icons.IMAGE_GENERIC, CommandGroups.RASTER_IMAGE),
-            new(".cr3", "Ben.Image.CR3", "Canon RAW 3", Icons.CR3, CommandGroups.RASTER_IMAGE),
+            new(".cr3", "Ben.Image.CR3", "Canon RAW 3", Icons.CR3, CommandGroups.RAW_IMAGE),
             new(".emf", "Ben.Image.EMF", "Enhanced Metafile", Icons.EMF, CommandGroups.VECTOR_IMAGE),
             new(".eps", "Ben.Image.EPS", "Encapsulated PostScript", Icons.EPS, CommandGroups.VECTOR_IMAGE),
             new(".gif", "Ben.Image.GIF", "Graphics Interchange Format", Icons.GIF, CommandGroups.RASTER_IMAGE),
@@ -61,7 +61,6 @@ namespace FileAssociations.Data {
             new(".php", "Ben.Text.PHP", "PHP: Hypertext Preprocessor", Icons.PHP, CommandGroups.WEB_TEXT),
             new(".vbs", "Ben.Text.VBS", "Visual Basic Script", Icons.VBS, CommandGroups.TEXT),
             new(".wsh", "Ben.Text.WSH", "Windows Scripting Host Script", Icons.WSH, CommandGroups.TEXT),
-
         };
 
     }

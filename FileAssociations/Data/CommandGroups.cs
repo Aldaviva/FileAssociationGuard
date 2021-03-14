@@ -8,6 +8,7 @@ namespace FileAssociations.Data {
         public static readonly IEnumerable<Command?> AUDIO        = new[] { Commands.PLAY_AUDIO };
         public static readonly IEnumerable<Command?> VIDEO        = new[] { Commands.PLAY_VIDEO };
         public static readonly IEnumerable<Command?> RASTER_IMAGE = new[] { Commands.VIEW_IMAGE, Commands.EDIT_RASTER_IMAGE };
+        public static readonly IEnumerable<Command?> RAW_IMAGE    = RASTER_IMAGE.Append(Commands.BROWSE_IMAGE);
         public static readonly IEnumerable<Command?> VECTOR_IMAGE = new[] { Commands.VIEW_IMAGE, Commands.EDIT_VECTOR_IMAGE };
         public static readonly IEnumerable<Command?> TEXT         = new[] { Commands.EDIT_TEXT_NOTEPAD2, Commands.EDIT_TEXT_SUBLIME_TEXT };
         public static readonly IEnumerable<Command?> WEB_TEXT     = TEXT.Append(Commands.EDIT_TEXT_DREAMWEAVER);
