@@ -6,6 +6,9 @@ using Microsoft.Win32;
 
 namespace FileAssociations {
 
+    /// <summary>
+    ///     See also https://kolbi.cz/blog/2017/10/25/setuserfta-userchoice-hash-defeated-set-file-type-associations-per-user/
+    /// </summary>
     internal static class FileAssociationService {
 
         private const string DEFAULTICON = "DefaultIcon";
