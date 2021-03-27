@@ -1,27 +1,47 @@
-﻿using System;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using FileAssociations.Data;
 using Microsoft.Win32;
+using NLog;
 
 namespace FileAssociations {
 
-    /// <summary>
-    ///     See also https://kolbi.cz/blog/2017/10/25/setuserfta-userchoice-hash-defeated-set-file-type-associations-per-user/
-    /// </summary>
-    internal static class FileAssociationService {
+    /// <summary>If this doesn't work, try using https://kolbi.cz/blog/2017/10/25/setuserfta-userchoice-hash-defeated-set-file-type-associations-per-user/ </summary>
+    internal class FileAssociationService {
 
-        private const string DEFAULTICON = "DefaultIcon";
-        private const string SHELL       = "shell";
-        private const string COMMAND     = "command";
-        private const string USERCHOICE  = "UserChoice";
-        private const string ICON        = "Icon";
+        private static readonly Logger LOGGER = LogManager.GetCurrentClassLogger();
 
-        private const bool DRY_RUN = false;
+        private const string DEFAULTICON            = "DefaultIcon";
+        private const string SHELL                  = "shell";
+        private const string COMMAND                = "command";
+        private const string USERCHOICE             = "UserChoice";
+        private const string ICON                   = "Icon";
+        private const string SYSTEMFILEASSOCIATIONS = "SystemFileAssociations";
 
-        private static readonly IdentityReference CURRENT_USER_IDENTITY = WindowsIdentity.GetCurrent().User!.Translate(typeof(SecurityIdentifier));
+        private readonly bool              isDryRun;
+        private readonly IdentityReference currentUserIdentity;
 
-        public static void Main() {
+        public FileAssociationService(bool isDryRun) {
+            this.isDryRun       = isDryRun;
+            currentUserIdentity = WindowsIdentity.GetCurrent().User!.Translate(typeof(SecurityIdentifier));
+        }
+
+        public void fixFileAssociations() {
+            try {
+                validate(Data.FileAssociations.ASSOCIATIONS);
+            } catch (ValidationException e) {
+                LOGGER.Error("File associations are invalid, exiting without applying any changes.");
+                LOGGER.Error(e.Message);
+                throw;
+            }
+
+            if (isDryRun) {
+                LOGGER.Info("Dry-run mode. Changes below will be previewed but not applied.");
+            }
+
             foreach (var association in Data.FileAssociations.ASSOCIATIONS) {
                 applyFileAssociation(association);
 
@@ -29,13 +49,37 @@ namespace FileAssociations {
                     clearUserChoice(extension);
                 }
             }
+
+            foreach (string fileAssociationGroup in new[] { "text", "image", "audio", "video" }) {
+                using RegistryKey? systemFileAssociationGroup = Registry.ClassesRoot.OpenSubKey($"{SYSTEMFILEASSOCIATIONS}\\{fileAssociationGroup}", true);
+                if (systemFileAssociationGroup is not null) {
+                    LOGGER.Debug($"Fixing system file association group {fileAssociationGroup}...");
+                    regDeleteSubKeyRecursively(systemFileAssociationGroup, SHELL);
+                }
+            }
         }
 
-        private static void applyFileAssociation(FileAssociation fileAssociation) {
-            foreach (string extension in fileAssociation.extensions) {
-                Console.WriteLine($"\nFixing file extension {extension}");
+        /// <exception cref="ValidationException">If the associations are invalid.</exception>
+        private static void validate(IEnumerable<FileAssociation> associations) {
+            foreach (FileAssociation fileAssociation in associations) {
+                IEnumerable<IGrouping<string, Command>> commandsWithDuplicateVerbs = fileAssociation.commands.Compact().GroupBy(command => command.verb).Where(commands => commands.Count() > 1);
+                foreach (IGrouping<string, Command> commands in commandsWithDuplicateVerbs) {
+                    throw new ValidationException($"File association {fileAssociation.extensions.First()} has {commands.Count():N0} commands for duplicate verb \"{commands.Key}\":\n" +
+                        string.Join('\n', commands.Select((command, i) => $" {i + 1:N0}. {command.label} ({command.command})")));
+                }
+            }
+        }
 
-                regSetValue(@"HKEY_CLASSES_ROOT\" + extension, null, fileAssociation.programId);
+        private void applyFileAssociation(FileAssociation fileAssociation) {
+            foreach (string extension in fileAssociation.extensions) {
+                LOGGER.Debug($"Fixing file extension {extension}");
+
+                regSetValue($"{Registry.ClassesRoot.Name}\\{extension}", null, fileAssociation.programId);
+
+                using RegistryKey? systemFileAssociation = Registry.ClassesRoot.OpenSubKey($"{SYSTEMFILEASSOCIATIONS}\\{extension}", true);
+                if (systemFileAssociation is not null) {
+                    regDeleteSubKeyRecursively(systemFileAssociation, SHELL);
+                }
             }
 
             using RegistryKey programKey = Registry.ClassesRoot.CreateSubKey(fileAssociation.programId);
@@ -44,9 +88,7 @@ namespace FileAssociations {
             using RegistryKey defaultIconKey = programKey.CreateSubKey(DEFAULTICON);
             regSetValue(defaultIconKey, null, fileAssociation.iconPath);
 
-            if (!DRY_RUN) {
-                programKey.DeleteSubKeyTree(SHELL, false);
-            }
+            regDeleteSubKeyRecursively(programKey, SHELL);
 
             using RegistryKey shellKey = programKey.CreateSubKey(SHELL);
 
@@ -70,42 +112,46 @@ namespace FileAssociations {
             }
         }
 
-        private static void regSetValue(RegistryKey key, string? value, object data) {
-            Console.WriteLine($"SetValue {key}\\{value ?? "(Default)"} = {data}");
-            if (!DRY_RUN) {
+        private void regDeleteSubKeyRecursively(RegistryKey parentKey, string childNameToDelete) {
+            LOGGER.Trace($"Deleting {parentKey}\\{childNameToDelete}");
+            if (!isDryRun) {
+                parentKey.DeleteSubKeyTree(childNameToDelete, false);
+            }
+        }
+
+        private void regSetValue(RegistryKey key, string? value, object data) {
+            LOGGER.Trace($"SetValue {key}\\{value ?? "(Default)"} = {data}");
+            if (!isDryRun) {
                 key.SetValue(value, data);
             }
         }
 
-        private static void regSetValue(string key, string? value, object data) {
-            Console.WriteLine($"SetValue {key}\\{value ?? "(Default)"} = {data}");
-            if (!DRY_RUN) {
+        private void regSetValue(string key, string? value, object data) {
+            LOGGER.Trace($"SetValue {key}\\{value ?? "(Default)"} = {data}");
+            if (!isDryRun) {
                 Registry.SetValue(key, value, data);
             }
         }
 
-        private static void clearUserChoice(string extension) {
+        private void clearUserChoice(string extension) {
             using RegistryKey? fileExtKey = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FileExts\" + extension,
                 RegistryKeyPermissionCheck.ReadWriteSubTree);
 
             if (fileExtKey?.OpenSubKey(USERCHOICE, RegistryKeyPermissionCheck.ReadWriteSubTree, RegistryRights.ChangePermissions) is { } userChoice) {
                 removeCurrentUserDenySetValuePermissions(userChoice);
 
-                Console.WriteLine($"Deleting {fileExtKey.Name}\\{USERCHOICE}");
-                if (!DRY_RUN) {
-                    fileExtKey.DeleteSubKey(USERCHOICE);
-                }
+                regDeleteSubKeyRecursively(fileExtKey, USERCHOICE);
             }
         }
 
-        private static void removeCurrentUserDenySetValuePermissions(RegistryKey key) {
+        private void removeCurrentUserDenySetValuePermissions(RegistryKey key) {
             RegistrySecurity registrySecurity = key.GetAccessControl();
 
-            var registryAccessRule = new RegistryAccessRule(CURRENT_USER_IDENTITY, RegistryRights.SetValue, InheritanceFlags.None, PropagationFlags.None, AccessControlType.Deny);
+            var registryAccessRule = new RegistryAccessRule(currentUserIdentity, RegistryRights.SetValue, InheritanceFlags.None, PropagationFlags.None, AccessControlType.Deny);
             registrySecurity.RemoveAccessRuleSpecific(registryAccessRule);
 
-            Console.WriteLine($"Removing permissions that deny SetValue rights to {CURRENT_USER_IDENTITY}");
-            if (!DRY_RUN) {
+            LOGGER.Trace($"Removing permissions that deny SetValue rights to {currentUserIdentity}");
+            if (!isDryRun) {
                 key.SetAccessControl(registrySecurity);
             }
         }
