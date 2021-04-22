@@ -1,8 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using FileAssociations.Data;
 
-namespace FileAssociations {
+namespace FileAssociations.Data {
 
     public class FileAssociation {
 

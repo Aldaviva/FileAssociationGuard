@@ -20,6 +20,8 @@ namespace FileAssociations {
         private const string USERCHOICE             = "UserChoice";
         private const string ICON                   = "Icon";
         private const string SYSTEMFILEASSOCIATIONS = "SystemFileAssociations";
+        private const string OPEN_WITH_LIST         = "OpenWithList";
+        private const string FILE_EXTS              = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FileExts\";
 
         private readonly bool              isDryRun;
         private readonly IdentityReference currentUserIdentity;
@@ -31,7 +33,7 @@ namespace FileAssociations {
 
         public void fixFileAssociations() {
             try {
-                validate(Data.FileAssociations.ASSOCIATIONS);
+                validate(FileAssociations.ASSOCIATIONS);
             } catch (ValidationException e) {
                 LOGGER.Error("File associations are invalid, exiting without applying any changes.");
                 LOGGER.Error(e.Message);
@@ -42,16 +44,23 @@ namespace FileAssociations {
                 LOGGER.Info("Dry-run mode. Changes below will be previewed but not applied.");
             }
 
-            foreach (var association in Data.FileAssociations.ASSOCIATIONS) {
+            foreach (var association in FileAssociations.ASSOCIATIONS) {
                 applyFileAssociation(association);
 
                 foreach (string extension in association.extensions) {
-                    clearUserChoice(extension);
+                    using RegistryKey? fileExtKey = Registry.CurrentUser.OpenSubKey(FILE_EXTS + extension, true);
+                    if (fileExtKey is not null) {
+                        regDeleteSubKeyRecursively(fileExtKey, OPEN_WITH_LIST);
+                    }
+
+                    if (extension != ".htm" && extension != ".html") {
+                        clearUserChoice(extension);
+                    }
                 }
             }
 
             foreach (string fileAssociationGroup in new[] { "text", "image", "audio", "video" }) {
-                using RegistryKey? systemFileAssociationGroup = Registry.ClassesRoot.OpenSubKey($"{SYSTEMFILEASSOCIATIONS}\\{fileAssociationGroup}", true);
+                using RegistryKey? systemFileAssociationGroup = Registry.ClassesRoot.OpenSubKey($@"{SYSTEMFILEASSOCIATIONS}\{fileAssociationGroup}", true);
                 if (systemFileAssociationGroup is not null) {
                     LOGGER.Debug($"Fixing system file association group {fileAssociationGroup}...");
                     regDeleteSubKeyRecursively(systemFileAssociationGroup, SHELL);
@@ -101,7 +110,7 @@ namespace FileAssociations {
                 using RegistryKey verbKey = shellKey.CreateSubKey(command.verb);
                 regSetValue(verbKey, null, command.label);
 
-                if (command.icon != null) {
+                if (command.icon is not null) {
                     regSetValue(verbKey, ICON, command.icon);
                 }
 
@@ -134,8 +143,7 @@ namespace FileAssociations {
         }
 
         private void clearUserChoice(string extension) {
-            using RegistryKey? fileExtKey = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FileExts\" + extension,
-                RegistryKeyPermissionCheck.ReadWriteSubTree);
+            using RegistryKey? fileExtKey = Registry.CurrentUser.OpenSubKey(FILE_EXTS + extension, RegistryKeyPermissionCheck.ReadWriteSubTree);
 
             if (fileExtKey?.OpenSubKey(USERCHOICE, RegistryKeyPermissionCheck.ReadWriteSubTree, RegistryRights.ChangePermissions) is { } userChoice) {
                 removeCurrentUserDenySetValuePermissions(userChoice);
@@ -147,7 +155,7 @@ namespace FileAssociations {
         private void removeCurrentUserDenySetValuePermissions(RegistryKey key) {
             RegistrySecurity registrySecurity = key.GetAccessControl();
 
-            var registryAccessRule = new RegistryAccessRule(currentUserIdentity, RegistryRights.SetValue, InheritanceFlags.None, PropagationFlags.None, AccessControlType.Deny);
+            RegistryAccessRule registryAccessRule = new(currentUserIdentity, RegistryRights.SetValue, InheritanceFlags.None, PropagationFlags.None, AccessControlType.Deny);
             registrySecurity.RemoveAccessRuleSpecific(registryAccessRule);
 
             LOGGER.Trace($"Removing permissions that deny SetValue rights to {currentUserIdentity}");

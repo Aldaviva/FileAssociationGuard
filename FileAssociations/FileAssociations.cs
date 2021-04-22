@@ -1,7 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using FileAssociations.Data;
 
-namespace FileAssociations.Data {
+namespace FileAssociations {
 
     public readonly struct FileAssociations {
 
@@ -31,7 +32,7 @@ namespace FileAssociations.Data {
             new(".psd", "Ben.Image.PSD", "Photoshop Document", Icons.PSD, CommandGroups.RASTER_IMAGE),
             new(".svg", "Ben.Image.SVG", "Scalable Vector Graphics", Icons.SVG, CommandGroups.VECTOR_IMAGE),
             new(".tga", "Ben.Image.TGA", "TARGA", Icons.TGA, CommandGroups.RASTER_IMAGE),
-            new(".tif", "Ben.Image.TIFF", "Tagged Image File Format", Icons.TIFF, CommandGroups.RASTER_IMAGE),
+            new(new[] { ".tif", ".tiff" }, "Ben.Image.TIFF", "Tagged Image File Format", Icons.TIFF, CommandGroups.RASTER_IMAGE),
             new(".webp", "Ben.Image.WEBP", "WebP", Icons.IMAGE_GENERIC, CommandGroups.RASTER_IMAGE),
             new(".wmf", "Ben.Image.WMF", "Windows Metafile", Icons.WMF, CommandGroups.VECTOR_IMAGE),
 
