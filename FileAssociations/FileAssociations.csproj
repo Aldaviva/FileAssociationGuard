@@ -13,6 +13,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="SetUserFTA.exe" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="SetUserFTA.exe" LogicalName="SetUserFTA.exe" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
     <PackageReference Include="NLog" Version="4.7.9" />
   </ItemGroup>

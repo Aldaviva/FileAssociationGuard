@@ -1,15 +1,17 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
-using System.Security.AccessControl;
-using System.Security.Principal;
+using System.Reflection;
+using System.Text;
 using FileAssociations.Data;
 using Microsoft.Win32;
 using NLog;
 
 namespace FileAssociations {
 
-    /// <summary>If this doesn't work, try using https://kolbi.cz/blog/2017/10/25/setuserfta-userchoice-hash-defeated-set-file-type-associations-per-user/ </summary>
     internal class FileAssociationService {
 
         private static readonly Logger LOGGER = LogManager.GetCurrentClassLogger();
@@ -17,18 +19,15 @@ namespace FileAssociations {
         private const string DEFAULTICON            = "DefaultIcon";
         private const string SHELL                  = "shell";
         private const string COMMAND                = "command";
-        private const string USERCHOICE             = "UserChoice";
         private const string ICON                   = "Icon";
         private const string SYSTEMFILEASSOCIATIONS = "SystemFileAssociations";
         private const string OPEN_WITH_LIST         = "OpenWithList";
         private const string FILE_EXTS              = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FileExts\";
 
-        private readonly bool              isDryRun;
-        private readonly IdentityReference currentUserIdentity;
+        private readonly bool isDryRun;
 
         public FileAssociationService(bool isDryRun) {
-            this.isDryRun       = isDryRun;
-            currentUserIdentity = WindowsIdentity.GetCurrent().User!.Translate(typeof(SecurityIdentifier));
+            this.isDryRun = isDryRun;
         }
 
         public void fixFileAssociations() {
@@ -52,10 +51,6 @@ namespace FileAssociations {
                     if (fileExtKey is not null) {
                         regDeleteSubKeyRecursively(fileExtKey, OPEN_WITH_LIST);
                     }
-
-                    if (extension != ".htm" && extension != ".html") {
-                        clearUserChoice(extension);
-                    }
                 }
             }
 
@@ -66,6 +61,42 @@ namespace FileAssociations {
                     regDeleteSubKeyRecursively(systemFileAssociationGroup, SHELL);
                 }
             }
+
+            applyUserChoice();
+        }
+
+        private void applyUserChoice() {
+            string setUserFtaExeFileName = Environment.ExpandEnvironmentVariables(Path.Combine("%temp%", "SetUserFTA.exe"));
+            using (Stream setUserFtaExeMemoryStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("SetUserFTA.exe") ??
+                throw new InvalidOperationException("Could not find embedded resource named SetUserFTA.exe."))
+            using (FileStream setUserFtaExeFileStream = File.Open(setUserFtaExeFileName, FileMode.Create, FileAccess.Write)) {
+                setUserFtaExeMemoryStream.CopyTo(setUserFtaExeFileStream);
+            }
+
+            LOGGER.Trace("Saved {0}", setUserFtaExeFileName);
+
+            string associationsFileName = Path.GetTempFileName();
+
+            using (TextWriter associationsFileWriter = new StreamWriter(associationsFileName, false, Encoding.UTF8)) {
+                foreach (FileAssociation fileAssociation in FileAssociations.ASSOCIATIONS) {
+                    foreach (string fileExtension in fileAssociation.extensions) {
+                        associationsFileWriter.WriteLine(string.Join(", ", fileExtension, fileAssociation.programId));
+                    }
+                }
+
+                associationsFileWriter.Flush();
+            }
+
+            LOGGER.Trace("Saved argument file for SetUserFTA.exe to {0}", associationsFileName);
+
+            if (!isDryRun) {
+                using Process setUserFtaProcess = Process.Start(setUserFtaExeFileName, associationsFileName) ?? throw new InvalidOperationException("Failed to start SetUserFTA.exe");
+                setUserFtaProcess.WaitForExit();
+            }
+
+            LOGGER.Info("Set User Choices.");
+            File.Delete(setUserFtaExeFileName);
+            File.Delete(associationsFileName);
         }
 
         /// <exception cref="ValidationException">If the associations are invalid.</exception>
@@ -139,28 +170,6 @@ namespace FileAssociations {
             LOGGER.Trace($"SetValue {key}\\{value ?? "(Default)"} = {data}");
             if (!isDryRun) {
                 Registry.SetValue(key, value, data);
-            }
-        }
-
-        private void clearUserChoice(string extension) {
-            using RegistryKey? fileExtKey = Registry.CurrentUser.OpenSubKey(FILE_EXTS + extension, RegistryKeyPermissionCheck.ReadWriteSubTree);
-
-            if (fileExtKey?.OpenSubKey(USERCHOICE, RegistryKeyPermissionCheck.ReadWriteSubTree, RegistryRights.ChangePermissions) is { } userChoice) {
-                removeCurrentUserDenySetValuePermissions(userChoice);
-
-                regDeleteSubKeyRecursively(fileExtKey, USERCHOICE);
-            }
-        }
-
-        private void removeCurrentUserDenySetValuePermissions(RegistryKey key) {
-            RegistrySecurity registrySecurity = key.GetAccessControl();
-
-            RegistryAccessRule registryAccessRule = new(currentUserIdentity, RegistryRights.SetValue, InheritanceFlags.None, PropagationFlags.None, AccessControlType.Deny);
-            registrySecurity.RemoveAccessRuleSpecific(registryAccessRule);
-
-            LOGGER.Trace($"Removing permissions that deny SetValue rights to {currentUserIdentity}");
-            if (!isDryRun) {
-                key.SetAccessControl(registrySecurity);
             }
         }
 
