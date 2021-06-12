@@ -17,6 +17,7 @@ namespace FileAssociations.Data {
         public static readonly string? XMLSPY                  = getAppPath("XMLSpy.exe");
         public static readonly string? VIVALDI                 = getInstallLocation(@"HKEY_CURRENT_USER\SOFTWARE\Vivaldi", "DestinationFolder", @"Application\vivaldi.exe");
         public static readonly string? VIVALDI_CUSTOM_LAUNCHER = getInstallLocation(@"HKEY_CURRENT_USER\SOFTWARE\Vivaldi", "DestinationFolder", "VivaldiCustomLauncher.exe");
+        public static readonly string? TOTAL_COMMANDER         = getInstallLocation(@"HKEY_CURRENT_USER\SOFTWARE\Ghisler\Total Commander", "InstallDir", "totalcmd64.exe");
 
         /// <summary>
         ///     Determine the absolute path of an EXE file using <c>HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths</c>.

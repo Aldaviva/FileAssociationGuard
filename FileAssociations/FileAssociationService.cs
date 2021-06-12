@@ -62,48 +62,16 @@ namespace FileAssociations {
                 }
             }
 
-            applyUserChoice();
-        }
+            applyUserChoices(FileAssociations.ASSOCIATIONS);
 
-        private void applyUserChoice() {
-            string setUserFtaExeFileName = Environment.ExpandEnvironmentVariables(Path.Combine("%temp%", "SetUserFTA.exe"));
-            using (Stream setUserFtaExeMemoryStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("SetUserFTA.exe") ??
-                throw new InvalidOperationException("Could not find embedded resource named SetUserFTA.exe."))
-            using (FileStream setUserFtaExeFileStream = File.Open(setUserFtaExeFileName, FileMode.Create, FileAccess.Write)) {
-                setUserFtaExeMemoryStream.CopyTo(setUserFtaExeFileStream);
-            }
-
-            LOGGER.Trace("Saved {0}", setUserFtaExeFileName);
-
-            string associationsFileName = Path.GetTempFileName();
-
-            using (TextWriter associationsFileWriter = new StreamWriter(associationsFileName, false, Encoding.UTF8)) {
-                foreach (FileAssociation fileAssociation in FileAssociations.ASSOCIATIONS) {
-                    foreach (string fileExtension in fileAssociation.extensions) {
-                        associationsFileWriter.WriteLine(string.Join(", ", fileExtension, fileAssociation.programId));
-                    }
-                }
-
-                associationsFileWriter.Flush();
-            }
-
-            LOGGER.Trace("Saved argument file for SetUserFTA.exe to {0}", associationsFileName);
-
-            if (!isDryRun) {
-                using Process setUserFtaProcess = Process.Start(setUserFtaExeFileName, associationsFileName) ?? throw new InvalidOperationException("Failed to start SetUserFTA.exe");
-                setUserFtaProcess.WaitForExit();
-            }
-
-            LOGGER.Info("Set User Choices.");
-            File.Delete(setUserFtaExeFileName);
-            File.Delete(associationsFileName);
+            fixFolderShellActions();
         }
 
         /// <exception cref="ValidationException">If the associations are invalid.</exception>
         private static void validate(IEnumerable<FileAssociation> associations) {
             foreach (FileAssociation fileAssociation in associations) {
-                IEnumerable<IGrouping<string, Command>> commandsWithDuplicateVerbs = fileAssociation.commands.Compact().GroupBy(command => command.verb).Where(commands => commands.Count() > 1);
-                foreach (IGrouping<string, Command> commands in commandsWithDuplicateVerbs) {
+                // Check if a given file association has two or more commands with the same verb, like two Open commands
+                if (fileAssociation.commands.Compact().GroupBy(command => command.verb).FirstOrDefault(cmds => cmds.Count() > 1) is { } commands) {
                     throw new ValidationException($"File association {fileAssociation.extensions.First()} has {commands.Count():N0} commands for duplicate verb \"{commands.Key}\":\n" +
                         string.Join('\n', commands.Select((command, i) => $" {i + 1:N0}. {command.label} ({command.command})")));
                 }
@@ -152,6 +120,72 @@ namespace FileAssociations {
             }
         }
 
+        private void applyUserChoices(IEnumerable<FileAssociation> fileAssociations) {
+            const string SET_USER_FTA_RESOURCE_NAME = "SetUserFTA.exe";
+            string       setUserFtaExeFileName      = Path.Combine(Path.GetTempPath(), "SetUserFTA.exe");
+
+            using (Stream setUserFtaExeMemoryStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(SET_USER_FTA_RESOURCE_NAME) ??
+                throw new InvalidOperationException($"Could not find embedded resource named {SET_USER_FTA_RESOURCE_NAME}"))
+            using (FileStream setUserFtaExeFileStream = File.Open(setUserFtaExeFileName, FileMode.Create, FileAccess.Write)) {
+                setUserFtaExeMemoryStream.CopyTo(setUserFtaExeFileStream);
+            }
+
+            LOGGER.Trace("Saved {0}", setUserFtaExeFileName);
+
+            string associationsFileName = Path.GetTempFileName();
+
+            using (TextWriter associationsFileWriter = new StreamWriter(associationsFileName, false, Encoding.UTF8)) {
+                foreach (FileAssociation fileAssociation in fileAssociations) {
+                    foreach (string fileExtension in fileAssociation.extensions) {
+                        associationsFileWriter.WriteLine(string.Join(", ", fileExtension, fileAssociation.programId));
+                    }
+                }
+
+                associationsFileWriter.Flush();
+            }
+
+            LOGGER.Trace("Saved argument file for SetUserFTA.exe to {0}", associationsFileName);
+
+            if (!isDryRun) {
+                using Process setUserFtaProcess = Process.Start(setUserFtaExeFileName, associationsFileName) ?? throw new InvalidOperationException($"Failed to start {setUserFtaExeFileName}");
+                setUserFtaProcess.WaitForExit();
+            }
+
+            LOGGER.Info("Set User Choices.");
+            File.Delete(setUserFtaExeFileName);
+            File.Delete(associationsFileName);
+        }
+
+        private void fixFolderShellActions() {
+            foreach (string? keyName in new[] { "Background", null }) {
+                foreach (string? subkeyName in new[] { "cmd", "PowerShell", "Total Commander" }) {
+                    using RegistryKey key = Registry.ClassesRoot.CreateSubKey(Path.Combine("Directory", keyName ?? string.Empty, SHELL, subkeyName), true);
+                    regDeleteValue(key, "Extended");
+
+                    switch (subkeyName) {
+                        case "cmd":
+                            regDeleteValue(key, "HideBasedOnVelocityId");
+                            regSetValue(key, null, "Open in Command Prompt");
+                            regSetValue(key, "Icon", Environment.ExpandEnvironmentVariables(@"%SYSTEMROOT%\System32\cmd.exe,0"));
+                            break;
+                        case "PowerShell":
+                            regDeleteValue(key, "ShowBasedOnVelocityId");
+                            regSetValue(key, null, "Open in PowerShell");
+                            regSetValue(key, "Icon", Environment.ExpandEnvironmentVariables(@"%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\powershell.exe,0"));
+                            break;
+                        case "Total Commander":
+                            regSetValue(key, null, "Open in Total Commander");
+                            regSetValue(key, "Icon", $"\"{ApplicationPaths.TOTAL_COMMANDER}\",0");
+                            using (RegistryKey commandKey = key.CreateSubKey("command", true)) {
+                                commandKey.SetValue(null, $"\"{ApplicationPaths.TOTAL_COMMANDER}\" /o \"%V\"");
+                            }
+
+                            break;
+                    }
+                }
+            }
+        }
+
         private void regDeleteSubKeyRecursively(RegistryKey parentKey, string childNameToDelete) {
             LOGGER.Trace($"Deleting {parentKey}\\{childNameToDelete}");
             if (!isDryRun) {
@@ -163,6 +197,17 @@ namespace FileAssociations {
             LOGGER.Trace($"SetValue {key}\\{value ?? "(Default)"} = {data}");
             if (!isDryRun) {
                 key.SetValue(value, data);
+            }
+        }
+
+        private void regDeleteValue(RegistryKey key, string? value) {
+            LOGGER.Trace($"DeleteValue {key}\\{value ?? "(Default)"}");
+            if (!isDryRun) {
+                if (value is not null) {
+                    key.DeleteValue(value, false);
+                } else {
+                    key.SetValue(value, string.Empty);
+                }
             }
         }
 
