@@ -57,7 +57,7 @@ namespace FileAssociations {
             foreach (string fileAssociationGroup in new[] { "text", "image", "audio", "video" }) {
                 using RegistryKey? systemFileAssociationGroup = Registry.ClassesRoot.OpenSubKey($@"{SYSTEMFILEASSOCIATIONS}\{fileAssociationGroup}", true);
                 if (systemFileAssociationGroup is not null) {
-                    LOGGER.Debug($"Fixing system file association group {fileAssociationGroup}...");
+                    LOGGER.Debug($"Fixing system file association group {fileAssociationGroup}");
                     regDeleteSubKeyRecursively(systemFileAssociationGroup, SHELL);
                 }
             }
@@ -157,26 +157,28 @@ namespace FileAssociations {
         }
 
         private void fixFolderShellActions() {
-            foreach (string? keyName in new[] { "Background", null }) {
-                foreach (string? subkeyName in new[] { "cmd", "PowerShell", "Total Commander" }) {
-                    using RegistryKey key = Registry.ClassesRoot.CreateSubKey(Path.Combine("Directory", keyName ?? string.Empty, SHELL, subkeyName), true);
+            foreach (string subkeyName in new[] { "cmd", "PowerShell", "Total Commander" }) {
+                LOGGER.Info($"Fixing directory shell command {subkeyName}");
+                foreach (string keyName in new[] { "Background", string.Empty }) {
+                    using RegistryKey key = Registry.ClassesRoot.CreateSubKey(Path.Combine("Directory", keyName, SHELL, subkeyName), true);
                     regDeleteValue(key, "Extended");
 
                     switch (subkeyName) {
                         case "cmd":
                             regDeleteValue(key, "HideBasedOnVelocityId");
                             regSetValue(key, null, "Open in Command Prompt");
-                            regSetValue(key, "Icon", Environment.ExpandEnvironmentVariables(@"%SYSTEMROOT%\System32\cmd.exe,0"));
+                            regSetValue(key, ICON, Environment.ExpandEnvironmentVariables(@"%SYSTEMROOT%\System32\cmd.exe,0"));
                             break;
                         case "PowerShell":
                             regDeleteValue(key, "ShowBasedOnVelocityId");
                             regSetValue(key, null, "Open in PowerShell");
-                            regSetValue(key, "Icon", Environment.ExpandEnvironmentVariables(@"%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\powershell.exe,0"));
+                            regSetValue(key, ICON, Environment.ExpandEnvironmentVariables(@"%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\powershell.exe,0"));
                             break;
                         case "Total Commander":
                             regSetValue(key, null, "Open in Total Commander");
-                            regSetValue(key, "Icon", $"\"{ApplicationPaths.TOTAL_COMMANDER}\",0");
-                            using (RegistryKey commandKey = key.CreateSubKey("command", true)) {
+                            //separate ICO extracted from (32-bit) totalcmd.exe,0 because it looks nicer than totalcmd64.exe,0 and is higher resolution than tcusbrun.exe,0
+                            regSetValue(key, ICON, Path.Combine(Path.GetDirectoryName(ApplicationPaths.TOTAL_COMMANDER)!, "MAINICON.ico"));
+                            using (RegistryKey commandKey = key.CreateSubKey(COMMAND, true)) {
                                 commandKey.SetValue(null, $"\"{ApplicationPaths.TOTAL_COMMANDER}\" /o \"%V\"");
                             }
 

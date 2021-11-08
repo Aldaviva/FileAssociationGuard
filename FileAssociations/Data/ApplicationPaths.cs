@@ -25,15 +25,16 @@ namespace FileAssociations.Data {
         /// <param name="exeFilename">The basename of the EXE file, with the file extension, e.g. <c>Photoshop.exe</c>.</param>
         /// <returns>The absolute path of the EXE file, or <c>null</c> if the EXE does not exist in <C>App Paths</C>.</returns>
         private static string? getAppPath(string exeFilename) {
-            return Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\" + exeFilename, null, null) as string;
-        }
-
-        private static string? getInstallLocation(string uninstallKey, string valueName, string executableFilename) {
-            return Registry.GetValue(uninstallKey, valueName, null) is string installLocation ? Path.Combine(installLocation, executableFilename) : null;
+            const string APP_PATHS_KEY = @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\";
+            return Registry.GetValue(Path.Combine(APP_PATHS_KEY, exeFilename), null, null) as string;
         }
 
         private static string? getInstallLocation(string uninstallKey, string executableFilename) {
             return getInstallLocation(uninstallKey, "InstallLocation", executableFilename);
+        }
+
+        private static string? getInstallLocation(string uninstallKey, string valueName, string executableFilename) {
+            return Registry.GetValue(uninstallKey, valueName, null) is string installLocation ? Path.Combine(installLocation, executableFilename) : null;
         }
 
     }

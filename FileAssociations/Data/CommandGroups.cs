@@ -14,10 +14,10 @@ namespace FileAssociations.Data {
         public static readonly IEnumerable<Command?> WEB_TEXT     = TEXT.Append(Commands.EDIT_TEXT_DREAMWEAVER);
         public static readonly IEnumerable<Command?> HTML         = new[] { Commands.BROWSE_WEB_PAGE }.Concat(WEB_TEXT);
         public static readonly IEnumerable<Command?> BAT          = new[] { Commands.EXECUTE_BAT }.Concat(TEXT);
-        public static readonly IEnumerable<Command?> PS1          = new[] { Commands.EXECUTE_POWERSHELL, Commands.EDIT_POWERSHELL }.Concat(TEXT);
+        public static readonly IEnumerable<Command?> PS1          = new[] { Commands.EXECUTE_POWERSHELL }.Concat(TEXT);
 
         public static readonly IEnumerable<Command?> PLAYLIST = new[] {
-            Command.create("playWinamp", "Play in Winamp", Commands.PLAY_AUDIO?.command, Commands.PLAY_AUDIO?.icon),
+            Command.create(Commands.VERB_OPEN, "Play in Winamp", Commands.PLAY_AUDIO?.command, Commands.PLAY_AUDIO?.icon),
             Command.create("playVlc", "Play in VLC", Commands.PLAY_VIDEO?.command, Commands.PLAY_VIDEO?.icon)
         };
 
