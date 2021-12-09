@@ -21,7 +21,7 @@
 
         public static readonly Command EXECUTE_POWERSHELL = Command.create(VERB_OPEN, "Run",
             @"""%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\powershell.exe"" ""-Command"" ""if((Get-ExecutionPolicy ) -ne 'AllSigned') { Set-ExecutionPolicy -Scope Process Bypass }; & '%1'""",
-            @"%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\powershell.exe"); //from HKEY_CLASSES_ROOT\SystemFileAssociations\.ps1\Shell\0\Command
+            Icons.PS1); //from HKEY_CLASSES_ROOT\SystemFileAssociations\.ps1\Shell\0\Command
 
     }
 

@@ -30,6 +30,8 @@ namespace FileAssociations {
             this.isDryRun = isDryRun;
         }
 
+        /// <exception cref="ValidationException"></exception>
+        /// <exception cref="InvalidOperationException"></exception>
         public void fixFileAssociations() {
             try {
                 validate(FileAssociations.ASSOCIATIONS);
@@ -43,7 +45,7 @@ namespace FileAssociations {
                 LOGGER.Info("Dry-run mode. Changes below will be previewed but not applied.");
             }
 
-            foreach (var association in FileAssociations.ASSOCIATIONS) {
+            foreach (FileAssociation association in FileAssociations.ASSOCIATIONS) {
                 applyFileAssociation(association);
 
                 foreach (string extension in association.extensions) {
@@ -120,12 +122,13 @@ namespace FileAssociations {
             }
         }
 
+        /// <exception cref="InvalidOperationException"></exception>
         private void applyUserChoices(IEnumerable<FileAssociation> fileAssociations) {
             const string SET_USER_FTA_RESOURCE_NAME = "SetUserFTA.exe";
             string       setUserFtaExeFileName      = Path.Combine(Path.GetTempPath(), "SetUserFTA.exe");
 
             using (Stream setUserFtaExeMemoryStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(SET_USER_FTA_RESOURCE_NAME) ??
-                throw new InvalidOperationException($"Could not find embedded resource named {SET_USER_FTA_RESOURCE_NAME}"))
+                   throw new InvalidOperationException($"Could not find embedded resource named {SET_USER_FTA_RESOURCE_NAME}"))
             using (FileStream setUserFtaExeFileStream = File.Open(setUserFtaExeFileName, FileMode.Create, FileAccess.Write)) {
                 setUserFtaExeMemoryStream.CopyTo(setUserFtaExeFileStream);
             }
