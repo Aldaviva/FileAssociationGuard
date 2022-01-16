@@ -7,7 +7,7 @@
     <LangVersion>latest</LangVersion>
     <Authors>Ben Hutchison</Authors>
     <Company>Ben Hutchison</Company>
-    <Copyright>© 2021 Ben Hutchison</Copyright>
+    <Copyright>© 2022 Ben Hutchison</Copyright>
     <Description>File Associations</Description>
     <ApplicationIcon>pifmgr_15.ico</ApplicationIcon>
   </PropertyGroup>
@@ -22,7 +22,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
-    <PackageReference Include="NLog" Version="4.7.12" />
+    <PackageReference Include="NLog" Version="4.7.13" />
   </ItemGroup>
 
 </Project>

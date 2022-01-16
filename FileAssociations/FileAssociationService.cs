@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Text;
 using FileAssociations.Data;
@@ -71,13 +70,14 @@ namespace FileAssociations {
 
         /// <exception cref="ValidationException">If the associations are invalid.</exception>
         private static void validate(IEnumerable<FileAssociation> associations) {
-            foreach (FileAssociation fileAssociation in associations) {
+            // Duplicates are now renamed in applyFileAssociation() instead of throwing an error.
+            /*foreach (FileAssociation fileAssociation in associations) {
                 // Check if a given file association has two or more commands with the same verb, like two Open commands
                 if (fileAssociation.commands.Compact().GroupBy(command => command.verb).FirstOrDefault(cmds => cmds.Count() > 1) is { } commands) {
                     throw new ValidationException($"File association {fileAssociation.extensions.First()} has {commands.Count():N0} commands for duplicate verb \"{commands.Key}\":\n" +
                         string.Join('\n', commands.Select((command, i) => $" {i + 1:N0}. {command.label} ({command.command})")));
                 }
-            }
+            }*/
         }
 
         private void applyFileAssociation(FileAssociation fileAssociation) {
@@ -102,13 +102,27 @@ namespace FileAssociations {
 
             using RegistryKey shellKey = programKey.CreateSubKey(SHELL);
 
-            int commandIndex = 0;
+            int          commandIndex = 0;
+            ISet<string> usedVerbs    = new HashSet<string>();
             foreach (Command command in fileAssociation.commands.Compact()) {
+                /*
+                 * The first, default, command is always given the verb "open" even if a different verb was specified, because lots of Windows programs assume this always exists, like TagScanner.
+                 * Duplicate verbs are fixed by adding an incrementing suffix, which would result in an example command list with verbs ["open", "open", "open"] being converted to ["open", "open2", "open3"].
+                 */
+                string verb = command.verb;
                 if (commandIndex == 0) {
-                    regSetValue(shellKey, null, command.verb);
+                    verb = Commands.VERB_OPEN;
+                    regSetValue(shellKey, null, verb);
+                } else {
+                    string nonCollidingVerb = verb;
+                    for (int suffix = 2; usedVerbs.Contains(nonCollidingVerb); suffix++) {
+                        nonCollidingVerb = verb + suffix;
+                    }
+
+                    verb = nonCollidingVerb;
                 }
 
-                using RegistryKey verbKey = shellKey.CreateSubKey(command.verb);
+                using RegistryKey verbKey = shellKey.CreateSubKey(verb);
                 regSetValue(verbKey, null, command.label);
 
                 if (command.icon is not null) {
@@ -119,6 +133,7 @@ namespace FileAssociations {
                 regSetValue(commandKey, null, command.command);
 
                 commandIndex++;
+                usedVerbs.Add(verb);
             }
         }
 

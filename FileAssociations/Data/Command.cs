@@ -21,11 +21,11 @@ namespace FileAssociations.Data {
         private Command(string verb, string label, string command, string? icon) {
             this.verb    = verb;
             this.label   = label;
-            this.command = Environment.ExpandEnvironmentVariables(command); // breaks with %SYSTEMROOT% for .ps1 files, works with C:\Windows\
+            this.command = command;
             this.icon    = icon;
         }
 
-        private Command(string verb, string label, string applicationPath): this(verb, label, simpleCommand(applicationPath), applicationPath) { }
+        private Command(string verb, string label, string applicationPath): this(verb, label, Environment.ExpandEnvironmentVariables(simpleCommand(applicationPath)), applicationPath) { }
 
         private static string simpleCommand(string applicationPath) {
             return $"\"{applicationPath}\" \"%1\"";
@@ -37,8 +37,13 @@ namespace FileAssociations.Data {
 
         [return: NotNullIfNotNull(nameof(command))]
         public static Command? create(string verb, string label, string? command, string? icon) {
-            return command is not null ? new Command(verb, label, command, icon) : null;
+            // Expand environment variables because %SYSTEMROOT% breaks .ps1 files, works with C:\Windows\
+            return command is not null ? new Command(verb, label, Environment.ExpandEnvironmentVariables(command), icon) : null;
         }
+
+        public Command withVerb(string newVerb) => new(newVerb, label, command, icon);
+
+        public Command withLabel(string newLabel) => new(verb, newLabel, command, icon);
 
     }
 
