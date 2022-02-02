@@ -15,6 +15,7 @@ namespace FileAssociations.Data {
         public static readonly IEnumerable<Command?> HTML         = new[] { Commands.BROWSE_WEB_PAGE }.Concat(WEB_TEXT);
         public static readonly IEnumerable<Command?> BAT          = new[] { Commands.EXECUTE_BAT }.Concat(TEXT);
         public static readonly IEnumerable<Command?> PS1          = new[] { Commands.EXECUTE_POWERSHELL }.Concat(TEXT);
+        public static readonly IEnumerable<Command?> REG          = TEXT.Append(Commands.MERGE_REGISTRY);
 
         public static readonly IEnumerable<Command?> PLAYLIST = new[] {
             Commands.PLAY_AUDIO?.withLabel("Play in Winamp"),

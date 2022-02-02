@@ -15,6 +15,7 @@
         public static readonly Command? EDIT_TEXT_DREAMWEAVER  = Command.create("editDreamweaver", "Edit with Dreamweaver", ApplicationPaths.DREAMWEAVER);
         public static readonly Command? EDIT_TEXT_XMLSPY       = Command.create("editXmlspy", "Edit with XMLSpy", ApplicationPaths.XMLSPY);
         public static readonly Command  EXECUTE_BAT            = Command.create("run", "Run", @"""%1"" %*", @"%SYSTEMROOT%\System32\cmd.exe");
+        public static readonly Command  MERGE_REGISTRY         = Command.create("merge", "Merge", "regedit.exe");
 
         public static readonly Command? BROWSE_WEB_PAGE = Command.create("browse", "Browse",
             ApplicationPaths.VIVALDI_CUSTOM_LAUNCHER is { } ? $@"""{ApplicationPaths.VIVALDI_CUSTOM_LAUNCHER}"" -- ""%1""" : null, ApplicationPaths.VIVALDI);

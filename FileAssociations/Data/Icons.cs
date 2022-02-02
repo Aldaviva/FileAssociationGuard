@@ -73,6 +73,7 @@ namespace FileAssociations.Data {
         public static readonly string MD   = ICONS_DIR + "markdown.ico";
         public static readonly string PHP  = ApplicationPaths.DREAMWEAVER + ",6";
         public static readonly string PS1  = @"%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\powershell.exe";
+        public static readonly string REG  = @"%SystemRoot%\regedit.exe,1";
         public static readonly string TXT  = IMAGERES + ",-102";
         public static readonly string VBS  = @"%SystemRoot%\System32\WScript.exe,2";
         public static readonly string WSH  = @"%SystemRoot%\System32\WScript.exe,1";

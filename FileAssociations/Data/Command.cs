@@ -31,6 +31,7 @@ namespace FileAssociations.Data {
             return $"\"{applicationPath}\" \"%1\"";
         }
 
+        [return: NotNullIfNotNull("applicationPath")]
         public static Command? create(string verb, string label, string? applicationPath) {
             return applicationPath is not null ? new Command(verb, label, applicationPath) : null;
         }

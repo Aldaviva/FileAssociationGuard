@@ -62,6 +62,7 @@ namespace FileAssociations {
             new(".php", "Ben.Text.PHP", "PHP: Hypertext Preprocessor", Icons.PHP, CommandGroups.WEB_TEXT),
             new(".vbs", "Ben.Text.VBS", "Visual Basic Script", Icons.VBS, CommandGroups.TEXT),
             new(".wsh", "Ben.Text.WSH", "Windows Scripting Host Script", Icons.WSH, CommandGroups.TEXT),
+            new(".reg", "Ben.Text.REG", "Registration Entries", Icons.REG, CommandGroups.REG),
         };
 
     }
