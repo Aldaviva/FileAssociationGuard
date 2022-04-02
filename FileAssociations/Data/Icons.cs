@@ -1,5 +1,8 @@
 ﻿// ReSharper disable ConvertToConstant.Global
 
+using System.Reflection;
+using NLog;
+
 namespace FileAssociations.Data {
 
     /// <remarks>
@@ -21,6 +24,8 @@ namespace FileAssociations.Data {
     ///     </para>
     /// </remarks>
     public readonly struct Icons {
+
+        private static readonly Logger LOGGER = LogManager.GetLogger(nameof(Icons));
 
         private const string IMAGERES  = @"%SystemRoot%\System32\imageres.dll";
         private const string ICONS_DIR = @"%SystemRoot%\Icons\";
@@ -75,9 +80,31 @@ namespace FileAssociations.Data {
         public static readonly string PS1  = @"%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\powershell.exe";
         public static readonly string REG  = @"%SystemRoot%\regedit.exe,1";
         public static readonly string TXT  = IMAGERES + ",-102";
+        public static readonly string INI  = IMAGERES + ",-69";
         public static readonly string VBS  = @"%SystemRoot%\System32\WScript.exe,2";
         public static readonly string WSH  = @"%SystemRoot%\System32\WScript.exe,1";
         public static readonly string XML  = ApplicationPaths.DREAMWEAVER + ",9";
+
+        public static Task install() {
+            Assembly assembly = Assembly.GetExecutingAssembly();
+
+            return Task.WhenAll(from resourceName in assembly.GetManifestResourceNames()
+                let iconNamePrefix = $"{assembly.GetName().Name}.Resources.Icons."
+                where resourceName.StartsWith(iconNamePrefix)
+                let filename = resourceName[iconNamePrefix.Length..]
+                let absolutePath = Environment.ExpandEnvironmentVariables(Path.Combine(ICONS_DIR, filename))
+                let manifestResourceStream = assembly.GetManifestResourceStream(resourceName)!
+                select ((Func<Task>) (() => {
+                    try {
+                        using FileStream fileStream = File.Open(absolutePath, FileMode.CreateNew, FileAccess.Write);
+                        LOGGER.Debug($"Copying icon to {absolutePath}");
+                        return manifestResourceStream.CopyToAsync(fileStream);
+                    } catch (IOException) {
+                        return Task.CompletedTask;
+                        // File already exists, leave it along
+                    }
+                }))());
+        }
 
     }
 

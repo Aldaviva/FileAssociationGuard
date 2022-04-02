@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-
-namespace FileAssociations.Data {
+﻿namespace FileAssociations.Data {
 
     public class FileAssociation {
 

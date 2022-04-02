@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
-using System.IO;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using FileAssociations.Data;
 using Microsoft.Win32;
 using NLog;
@@ -31,7 +29,7 @@ namespace FileAssociations {
 
         /// <exception cref="ValidationException"></exception>
         /// <exception cref="InvalidOperationException"></exception>
-        public void fixFileAssociations() {
+        public async Task fixFileAssociations() {
             try {
                 validate(FileAssociations.ASSOCIATIONS);
             } catch (ValidationException e) {
@@ -55,29 +53,36 @@ namespace FileAssociations {
                 }
             }
 
-            foreach (string fileAssociationGroup in new[] { "text", "image", "audio", "video" }) {
-                using RegistryKey? systemFileAssociationGroup = Registry.ClassesRoot.OpenSubKey($@"{SYSTEMFILEASSOCIATIONS}\{fileAssociationGroup}", true);
-                if (systemFileAssociationGroup is not null) {
-                    LOGGER.Debug($"Fixing system file association group {fileAssociationGroup}");
-                    regDeleteSubKeyRecursively(systemFileAssociationGroup, SHELL);
+            foreach (string mediaType in new[] { "text", "image", "audio", "video" }) {
+                using RegistryKey? mediaTypeKey = Registry.ClassesRoot.OpenSubKey($@"{SYSTEMFILEASSOCIATIONS}\{mediaType}", true);
+                if (mediaTypeKey is not null) {
+                    LOGGER.Debug($"Fixing system file association for media type {mediaType}");
+                    regDeleteSubKeyRecursively(mediaTypeKey, SHELL);
                 }
             }
 
-            applyUserChoices(FileAssociations.ASSOCIATIONS);
+            await applyUserChoices(FileAssociations.ASSOCIATIONS);
 
             fixFolderShellActions();
+
+            await Icons.install();
         }
 
         /// <exception cref="ValidationException">If the associations are invalid.</exception>
         private static void validate(IEnumerable<FileAssociation> associations) {
-            // Duplicates are now renamed in applyFileAssociation() instead of throwing an error.
-            /*foreach (FileAssociation fileAssociation in associations) {
-                // Check if a given file association has two or more commands with the same verb, like two Open commands
-                if (fileAssociation.commands.Compact().GroupBy(command => command.verb).FirstOrDefault(cmds => cmds.Count() > 1) is { } commands) {
-                    throw new ValidationException($"File association {fileAssociation.extensions.First()} has {commands.Count():N0} commands for duplicate verb \"{commands.Key}\":\n" +
-                        string.Join('\n', commands.Select((command, i) => $" {i + 1:N0}. {command.label} ({command.command})")));
+            ISet<string> extensions = new HashSet<string>();
+            foreach (FileAssociation association in associations) {
+                foreach (string extension in association.extensions) {
+                    if (!Regex.IsMatch(extension, @"^\.[\w-]+$", RegexOptions.IgnoreCase)) {
+                        throw new ValidationException($"Invalid extension {extension} for ProgID {association.programId}");
+                    }
+
+                    bool wasNew = extensions.Add(extension);
+                    if (!wasNew) {
+                        throw new ValidationException($"Duplicate file extension {extension} in ProgID {association.programId}");
+                    }
                 }
-            }*/
+            }
         }
 
         private void applyFileAssociation(FileAssociation fileAssociation) {
@@ -138,35 +143,35 @@ namespace FileAssociations {
         }
 
         /// <exception cref="InvalidOperationException"></exception>
-        private void applyUserChoices(IEnumerable<FileAssociation> fileAssociations) {
+        private async Task applyUserChoices(IEnumerable<FileAssociation> fileAssociations) {
             const string SET_USER_FTA_RESOURCE_NAME = "SetUserFTA.exe";
             string       setUserFtaExeFileName      = Path.Combine(Path.GetTempPath(), "SetUserFTA.exe");
 
-            using (Stream setUserFtaExeMemoryStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(SET_USER_FTA_RESOURCE_NAME) ??
-                   throw new InvalidOperationException($"Could not find embedded resource named {SET_USER_FTA_RESOURCE_NAME}"))
-            using (FileStream setUserFtaExeFileStream = File.Open(setUserFtaExeFileName, FileMode.Create, FileAccess.Write)) {
-                setUserFtaExeMemoryStream.CopyTo(setUserFtaExeFileStream);
+            await using (Stream setUserFtaExeMemoryStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(SET_USER_FTA_RESOURCE_NAME) ??
+                         throw new InvalidOperationException($"Could not find embedded resource named {SET_USER_FTA_RESOURCE_NAME}"))
+            await using (FileStream setUserFtaExeFileStream = File.Open(setUserFtaExeFileName, FileMode.Create, FileAccess.Write)) {
+                await setUserFtaExeMemoryStream.CopyToAsync(setUserFtaExeFileStream);
             }
 
             LOGGER.Trace("Saved {0}", setUserFtaExeFileName);
 
             string associationsFileName = Path.GetTempFileName();
 
-            using (TextWriter associationsFileWriter = new StreamWriter(associationsFileName, false, Encoding.UTF8)) {
+            await using (TextWriter associationsFileWriter = new StreamWriter(associationsFileName, false, Encoding.UTF8)) {
                 foreach (FileAssociation fileAssociation in fileAssociations) {
                     foreach (string fileExtension in fileAssociation.extensions) {
-                        associationsFileWriter.WriteLine(string.Join(", ", fileExtension, fileAssociation.programId));
+                        await associationsFileWriter.WriteLineAsync(string.Join(", ", fileExtension, fileAssociation.programId));
                     }
                 }
 
-                associationsFileWriter.Flush();
+                await associationsFileWriter.FlushAsync();
             }
 
             LOGGER.Trace("Saved argument file for SetUserFTA.exe to {0}", associationsFileName);
 
             if (!isDryRun) {
                 using Process setUserFtaProcess = Process.Start(setUserFtaExeFileName, associationsFileName) ?? throw new InvalidOperationException($"Failed to start {setUserFtaExeFileName}");
-                setUserFtaProcess.WaitForExit();
+                await setUserFtaProcess.WaitForExitAsync();
             }
 
             LOGGER.Info("Set User Choices.");

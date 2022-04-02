@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using FileAssociations.Data;
+﻿using FileAssociations.Data;
 
 namespace FileAssociations {
 
@@ -27,7 +25,7 @@ namespace FileAssociations {
             new(".emf", "Ben.Image.EMF", "Enhanced Metafile", Icons.EMF, CommandGroups.VECTOR_IMAGE),
             new(".eps", "Ben.Image.EPS", "Encapsulated PostScript", Icons.EPS, CommandGroups.VECTOR_IMAGE),
             new(".gif", "Ben.Image.GIF", "Graphics Interchange Format", Icons.GIF, CommandGroups.RASTER_IMAGE),
-            new(new[] { ".jpg", ".jpeg", ".jpe" }, "Ben.Image.JPEG", "Joint Photographic Experts Group", Icons.JPEG, CommandGroups.RASTER_IMAGE),
+            new(new[] { ".jpg", ".jpeg", ".jpe", ".jfif" }, "Ben.Image.JPEG", "Joint Photographic Experts Group", Icons.JPEG, CommandGroups.RASTER_IMAGE),
             new(".png", "Ben.Image.PNG", "Portable Network Graphics", Icons.PNG, CommandGroups.RASTER_IMAGE),
             new(".psd", "Ben.Image.PSD", "Photoshop Document", Icons.PSD, CommandGroups.RASTER_IMAGE),
             new(".svg", "Ben.Image.SVG", "Scalable Vector Graphics", Icons.SVG, CommandGroups.VECTOR_IMAGE),
@@ -40,7 +38,7 @@ namespace FileAssociations {
             new(".asf", "Ben.Video.ASF", "Advanced Systems Format", Icons.ASF, CommandGroups.VIDEO),
             new(".avi", "Ben.Video.AVI", "Audio Video Interleave", Icons.AVI, CommandGroups.VIDEO),
             new(".flv", "Ben.Video.FLV", "Flash Video", Icons.FLV, CommandGroups.VIDEO),
-            new(".mkv", "Ben.Video.MKV", "Matroska", Icons.MKV, CommandGroups.VIDEO),
+            new(".mkv", "Ben.Video.MKV", "Matroska Video", Icons.MKV, CommandGroups.VIDEO),
             new(".mov", "Ben.Video.MOV", "QuickTime Movie", Icons.MOV, CommandGroups.VIDEO),
             new(".mp4", "Ben.Video.MP4", "MPEG-4 Video", Icons.MP4, CommandGroups.VIDEO),
             new(".m4v", "Ben.Video.M4V", "MPEG-4 Video", Icons.M4V, CommandGroups.VIDEO),
@@ -54,15 +52,16 @@ namespace FileAssociations {
             new(".md", "Ben.Text.MD", "Markdown", Icons.MD, CommandGroups.TEXT),
             new(new[] { ".bat", ".cmd" }, "Ben.Text.BAT", "Batch File", Icons.BAT, CommandGroups.BAT),
             new(".ps1", "Ben.Text.PS1", "PowerShell Script", Icons.PS1, CommandGroups.PS1),
-            new(".xml", "Ben.Text.XML", "Extensible Markup Language", Icons.XML, CommandGroups.WEB_TEXT.Append(Commands.EDIT_TEXT_XMLSPY)),
+            new(".xml", "Ben.Text.XML", "Extensible Markup Language", Icons.XML, CommandGroups.XML),
             new(".json", "Ben.Text.JSON", "JavaScript Object Notation", Icons.JSON, CommandGroups.WEB_TEXT),
             new(".js", "Ben.Text.JS", "JavaScript", Icons.JS, CommandGroups.WEB_TEXT),
             new(new[] { ".css", ".less" }, "Ben.Text.CSS", "Cascading Style Sheet", Icons.CSS, CommandGroups.WEB_TEXT),
             new(new[] { ".html", ".htm" }, "Ben.Text.HTML", "Hypertext Markup Language", Icons.HTML, CommandGroups.HTML),
-            new(".php", "Ben.Text.PHP", "PHP: Hypertext Preprocessor", Icons.PHP, CommandGroups.WEB_TEXT),
+            new(".php", "Ben.Text.PHP", "PHP: Hypertext Preprocessor Script", Icons.PHP, CommandGroups.WEB_TEXT),
             new(".vbs", "Ben.Text.VBS", "Visual Basic Script", Icons.VBS, CommandGroups.TEXT),
             new(".wsh", "Ben.Text.WSH", "Windows Scripting Host Script", Icons.WSH, CommandGroups.TEXT),
-            new(".reg", "Ben.Text.REG", "Registration Entries", Icons.REG, CommandGroups.REG),
+            new(".reg", "Ben.Text.REG", "Registry Entries", Icons.REG, CommandGroups.REG),
+            new(new[] { ".ini", ".conf", ".cfg", ".config", ".cnf" }, "Ben.Text.INI", "Configuration", Icons.INI, CommandGroups.TEXT),
         };
 
     }

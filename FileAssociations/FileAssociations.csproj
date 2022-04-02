@@ -1,28 +1,47 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-    <Nullable>enable</Nullable>
-    <LangVersion>latest</LangVersion>
-    <Authors>Ben Hutchison</Authors>
-    <Company>Ben Hutchison</Company>
-    <Copyright>© 2022 Ben Hutchison</Copyright>
-    <Description>File Associations</Description>
-    <ApplicationIcon>pifmgr_15.ico</ApplicationIcon>
-  </PropertyGroup>
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net6.0-windows</TargetFramework>
+		<Nullable>enable</Nullable>
+		<LangVersion>latest</LangVersion>
+		<Authors>Ben Hutchison</Authors>
+		<Company>Ben Hutchison</Company>
+		<Copyright>© 2022 Ben Hutchison</Copyright>
+		<Description>File Associations</Description>
+		<ApplicationIcon>pifmgr_15.ico</ApplicationIcon>
+		<RollForward>major</RollForward>
+		<ImplicitUsings>enable</ImplicitUsings>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <None Remove="SetUserFTA.exe" />
-  </ItemGroup>
+	<ItemGroup>
+		<EmbeddedResource Include="Resources\Icons\asf.ico" />
+		<EmbeddedResource Include="Resources\Icons\avi.ico" />
+		<EmbeddedResource Include="Resources\Icons\cr3.ico" />
+		<EmbeddedResource Include="Resources\Icons\flac.ico" />
+		<EmbeddedResource Include="Resources\Icons\flv.ico" />
+		<EmbeddedResource Include="Resources\Icons\m4a.ico" />
+		<EmbeddedResource Include="Resources\Icons\m4v.ico" />
+		<EmbeddedResource Include="Resources\Icons\markdown.ico" />
+		<EmbeddedResource Include="Resources\Icons\mkv.ico" />
+		<EmbeddedResource Include="Resources\Icons\mov.ico" />
+		<EmbeddedResource Include="Resources\Icons\mp3.ico" />
+		<EmbeddedResource Include="Resources\Icons\mp4.ico" />
+		<EmbeddedResource Include="Resources\Icons\mpeg.ico" />
+		<EmbeddedResource Include="Resources\Icons\ogg.ico" />
+		<EmbeddedResource Include="Resources\Icons\opus.ico" />
+		<EmbeddedResource Include="Resources\Icons\ts.ico" />
+		<EmbeddedResource Include="Resources\Icons\video_generic.ico" />
+		<EmbeddedResource Include="Resources\Icons\wav.ico" />
+		<EmbeddedResource Include="Resources\Icons\webm.ico" />
+		<EmbeddedResource Include="Resources\Icons\wma.ico" />
+		<EmbeddedResource Include="Resources\Icons\wmv.ico" />
+		<EmbeddedResource Include="Resources\Programs\SetUserFTA.exe" LogicalName="SetUserFTA.exe" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <EmbeddedResource Include="SetUserFTA.exe" LogicalName="SetUserFTA.exe" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
-    <PackageReference Include="NLog" Version="4.7.13" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
+		<PackageReference Include="NLog" Version="4.7.15" />
+	</ItemGroup>
 
 </Project>

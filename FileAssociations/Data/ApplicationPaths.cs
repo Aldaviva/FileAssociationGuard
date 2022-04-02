@@ -1,5 +1,4 @@
-﻿using System.IO;
-using Microsoft.Win32;
+﻿using Microsoft.Win32;
 
 namespace FileAssociations.Data {
 

@@ -1,5 +1,4 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using NLog;
 using NLog.Config;
 using NLog.Targets;
@@ -12,7 +11,7 @@ namespace FileAssociations {
 
         private static Logger? LOGGER;
 
-        public static int Main() {
+        public static async Task<int> Main() {
             initLogging(LogLevel.Trace);
 
             LOGGER = LogManager.GetCurrentClassLogger();
@@ -20,7 +19,7 @@ namespace FileAssociations {
             FileAssociationService fileAssociationService = new(DRY_RUN);
 
             try {
-                fileAssociationService.fixFileAssociations();
+                await fileAssociationService.fixFileAssociations();
             } catch (ValidationException) {
                 return 1;
             } catch (InvalidOperationException) {

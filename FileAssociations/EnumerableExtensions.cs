@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-
-// ReSharper disable InconsistentNaming - library functions that are supposed to look like Linq methods, which user UpperCase naming.
+﻿// ReSharper disable InconsistentNaming - library functions that are supposed to look like Linq methods, which user UpperCase naming.
 
 namespace FileAssociations {
 
