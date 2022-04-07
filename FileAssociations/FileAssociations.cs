@@ -21,11 +21,12 @@ namespace FileAssociations {
             // Images
             new(".ai", "Ben.Image.AI", "Illustrator Document", Icons.AI, CommandGroups.VECTOR_IMAGE),
             new(".bmp", "Ben.Image.BMP", "Bitmap", Icons.IMAGE_GENERIC, CommandGroups.RASTER_IMAGE),
-            new(".cr3", "Ben.Image.CR3", "Canon RAW 3", Icons.CR3, CommandGroups.RAW_IMAGE),
+            new(new[] { ".cr3", ".cr2" }, "Ben.Image.CR3", "Canon RAW 3", Icons.CR3, CommandGroups.RAW_IMAGE),
             new(".emf", "Ben.Image.EMF", "Enhanced Metafile", Icons.EMF, CommandGroups.VECTOR_IMAGE),
             new(".eps", "Ben.Image.EPS", "Encapsulated PostScript", Icons.EPS, CommandGroups.VECTOR_IMAGE),
             new(".gif", "Ben.Image.GIF", "Graphics Interchange Format", Icons.GIF, CommandGroups.RASTER_IMAGE),
             new(new[] { ".jpg", ".jpeg", ".jpe", ".jfif" }, "Ben.Image.JPEG", "Joint Photographic Experts Group", Icons.JPEG, CommandGroups.RASTER_IMAGE),
+            new(new[] { ".jp2", ".j2k", ".jpf", ".jpm", ".jpg2", ".j2c", ".jpc", ".jpx" }, "Ben.Image.JPEG2000", "JPEG 2000", Icons.JPEG, CommandGroups.RASTER_IMAGE),
             new(".png", "Ben.Image.PNG", "Portable Network Graphics", Icons.PNG, CommandGroups.RASTER_IMAGE),
             new(".psd", "Ben.Image.PSD", "Photoshop Document", Icons.PSD, CommandGroups.RASTER_IMAGE),
             new(".svg", "Ben.Image.SVG", "Scalable Vector Graphics", Icons.SVG, CommandGroups.VECTOR_IMAGE),

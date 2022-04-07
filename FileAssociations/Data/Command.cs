@@ -41,9 +41,7 @@ namespace FileAssociations.Data {
             return command is not null ? new Command(verb, label, Environment.ExpandEnvironmentVariables(command), icon) : null;
         }
 
-        public Command withVerb(string newVerb) => new(newVerb, label, command, icon);
-
-        public Command withLabel(string newLabel) => new(verb, newLabel, command, icon);
+        public Command with(string? newLabel, string? newVerb = null) => new(newVerb ?? verb, newLabel ?? label, command, icon);
 
     }
 

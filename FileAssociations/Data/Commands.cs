@@ -7,7 +7,7 @@
         public static readonly Command? PLAY_AUDIO             = Command.create("play", "Play", ApplicationPaths.WINAMP);
         public static readonly Command? VIEW_IMAGE             = Command.create("view", "View", ApplicationPaths.IRFANVIEW);
         public static readonly Command? EDIT_RASTER_IMAGE      = Command.create("edit", "Edit", ApplicationPaths.PHOTOSHOP);
-        public static readonly Command? EDIT_VECTOR_IMAGE      = Command.create("edit", "Edit", ApplicationPaths.ILLUSTRATOR);
+        public static readonly Command? EDIT_VECTOR_IMAGE      = Command.create("edit", "Edit in Illustrator", ApplicationPaths.ILLUSTRATOR);
         public static readonly Command? BROWSE_IMAGE           = Command.create("browse", "Browse", ApplicationPaths.BRIDGE);
         public static readonly Command? PLAY_VIDEO             = Command.create("play", "Play", ApplicationPaths.VLC);
         public static readonly Command? EDIT_TEXT_NOTEPAD2     = Command.create("editNotepad2", "Edit with Notepad2", ApplicationPaths.NOTEPAD2);
