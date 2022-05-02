@@ -1,6 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Reflection;
+using System.Security.AccessControl;
+using System.Security.Principal;
 using System.Text;
 using System.Text.RegularExpressions;
 using FileAssociations.Data;
@@ -183,29 +185,40 @@ namespace FileAssociations {
             foreach (string subkeyName in new[] { "cmd", "PowerShell", "Total Commander" }) {
                 LOGGER.Info($"Fixing directory shell command {subkeyName}");
                 foreach (string keyName in new[] { "Background", string.Empty }) {
-                    using RegistryKey key = Registry.ClassesRoot.CreateSubKey(Path.Combine("Directory", keyName, SHELL, subkeyName), true);
-                    regDeleteValue(key, "Extended");
+                    string      subkey = Path.Combine("Directory", keyName, SHELL, subkeyName);
+                    RegistryKey key;
 
-                    switch (subkeyName) {
-                        case "cmd":
-                            regDeleteValue(key, "HideBasedOnVelocityId");
-                            regSetValue(key, null, "Open in Command Prompt");
-                            regSetValue(key, ICON, Environment.ExpandEnvironmentVariables(@"%SYSTEMROOT%\System32\cmd.exe,0"));
-                            break;
-                        case "PowerShell":
-                            regDeleteValue(key, "ShowBasedOnVelocityId");
-                            regSetValue(key, null, "Open in PowerShell");
-                            regSetValue(key, ICON, Environment.ExpandEnvironmentVariables(@"%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\powershell.exe,0"));
-                            break;
-                        case "Total Commander":
-                            regSetValue(key, null, "Open in Total Commander");
-                            //separate ICO extracted from (32-bit) totalcmd.exe,0 because it looks nicer than totalcmd64.exe,0 and is higher resolution than tcusbrun.exe,0
-                            regSetValue(key, ICON, Path.Combine(Path.GetDirectoryName(ApplicationPaths.TOTAL_COMMANDER)!, "MAINICON.ico"));
-                            using (RegistryKey commandKey = key.CreateSubKey(COMMAND, true)) {
-                                commandKey.SetValue(null, $"\"{ApplicationPaths.TOTAL_COMMANDER}\" /o \"%V\"");
-                            }
+                    try {
+                        key = Registry.ClassesRoot.CreateSubKey(subkey, true);
+                    } catch (UnauthorizedAccessException) {
+                        regTakeOwnership(Registry.ClassesRoot, subkey);
+                        key = Registry.ClassesRoot.CreateSubKey(subkey, true);
+                    }
 
-                            break;
+                    using (key) {
+                        regDeleteValue(key, "Extended");
+
+                        switch (subkeyName) {
+                            case "cmd":
+                                regDeleteValue(key, "HideBasedOnVelocityId");
+                                regSetValue(key, null, "Open in Command Prompt");
+                                regSetValue(key, ICON, Environment.ExpandEnvironmentVariables(@"%SYSTEMROOT%\System32\cmd.exe,0"));
+                                break;
+                            case "PowerShell":
+                                regDeleteValue(key, "ShowBasedOnVelocityId");
+                                regSetValue(key, null, "Open in PowerShell");
+                                regSetValue(key, ICON, Environment.ExpandEnvironmentVariables(@"%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\powershell.exe,0"));
+                                break;
+                            case "Total Commander":
+                                regSetValue(key, null, "Open in Total Commander");
+                                //separate ICO extracted from (32-bit) totalcmd.exe,0 because it looks nicer than totalcmd64.exe,0 and is higher resolution than tcusbrun.exe,0
+                                regSetValue(key, ICON, Path.Combine(Path.GetDirectoryName(ApplicationPaths.TOTAL_COMMANDER)!, "MAINICON.ico"));
+                                using (RegistryKey commandKey = key.CreateSubKey(COMMAND, true)) {
+                                    commandKey.SetValue(null, $"\"{ApplicationPaths.TOTAL_COMMANDER}\" /o \"%V\"");
+                                }
+
+                                break;
+                        }
                     }
                 }
             }
@@ -240,6 +253,34 @@ namespace FileAssociations {
             LOGGER.Trace($"SetValue {key}\\{value ?? "(Default)"} = {data}");
             if (!isDryRun) {
                 Registry.SetValue(key, value, data);
+            }
+        }
+
+        private void regTakeOwnership(RegistryKey hive, string key) {
+            SecurityTokenManipulator.AddPrivilege(SecurityTokenManipulator.SE_RESTORE_NAME);
+            SecurityTokenManipulator.AddPrivilege(SecurityTokenManipulator.SE_TAKE_OWNERSHIP_NAME);
+
+            LOGGER.Trace($"Taking ownership of {hive}\\{key}");
+
+            //BuiltinAdministratorsSid is the administrators group, not the administrator user, contrary to what the documentation says
+            SecurityIdentifier adminGroup = new(WellKnownSidType.BuiltinAdministratorsSid, WindowsIdentity.GetCurrent().User!.AccountDomainSid);
+
+            using (RegistryKey keyHandle = hive.OpenSubKey(key, RegistryKeyPermissionCheck.ReadWriteSubTree, RegistryRights.TakeOwnership)!) {
+                RegistrySecurity registrySecurity = keyHandle.GetAccessControl();
+                registrySecurity.SetOwner(adminGroup);
+
+                if (!isDryRun) {
+                    keyHandle.SetAccessControl(registrySecurity);
+                }
+            }
+
+            if (!isDryRun) {
+                using RegistryKey keyHandle        = hive.OpenSubKey(key, RegistryKeyPermissionCheck.ReadWriteSubTree, RegistryRights.ChangePermissions)!;
+                RegistrySecurity  registrySecurity = keyHandle.GetAccessControl();
+                registrySecurity.AddAccessRule(new RegistryAccessRule(adminGroup, RegistryRights.FullControl, InheritanceFlags.ObjectInherit | InheritanceFlags.ContainerInherit,
+                    PropagationFlags.None, AccessControlType.Allow));
+
+                keyHandle.SetAccessControl(registrySecurity);
             }
         }
 

@@ -71,19 +71,20 @@ namespace FileAssociations.Data {
 
         //Text
         public static readonly string BAT  = IMAGERES + ",-68";
-        public static readonly string CSS  = ApplicationPaths.DREAMWEAVER + ",8";
-        public static readonly string HTML = ApplicationPaths.DREAMWEAVER + ",17";
-        public static readonly string JS   = ApplicationPaths.DREAMWEAVER + ",7";
-        public static readonly string JSON = ApplicationPaths.DREAMWEAVER + ",24";
+        public static readonly string CSS  = ICONS_DIR + "css.ico";
+        public static readonly string LESS = ICONS_DIR + "less.ico";
+        public static readonly string HTML = ICONS_DIR + "html.ico";
+        public static readonly string JS   = ICONS_DIR + "js.ico";
+        public static readonly string JSON = ICONS_DIR + "json.ico";
         public static readonly string MD   = ICONS_DIR + "markdown.ico";
-        public static readonly string PHP  = ApplicationPaths.DREAMWEAVER + ",6";
+        public static readonly string PHP  = ICONS_DIR + "php.ico";
         public static readonly string PS1  = @"%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\powershell.exe";
         public static readonly string REG  = @"%SystemRoot%\regedit.exe,1";
         public static readonly string TXT  = IMAGERES + ",-102";
         public static readonly string INI  = IMAGERES + ",-69";
         public static readonly string VBS  = @"%SystemRoot%\System32\WScript.exe,2";
         public static readonly string WSH  = @"%SystemRoot%\System32\WScript.exe,1";
-        public static readonly string XML  = ApplicationPaths.DREAMWEAVER + ",9";
+        public static readonly string XML  = ICONS_DIR + "xml.ico";
 
         public static Task install() {
             Assembly assembly = Assembly.GetExecutingAssembly();

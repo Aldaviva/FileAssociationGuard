@@ -12,14 +12,20 @@
 		<ApplicationIcon>pifmgr_15.ico</ApplicationIcon>
 		<RollForward>major</RollForward>
 		<ImplicitUsings>enable</ImplicitUsings>
+		<ApplicationManifest>app.manifest</ApplicationManifest>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<EmbeddedResource Include="Resources\Icons\asf.ico" />
 		<EmbeddedResource Include="Resources\Icons\avi.ico" />
 		<EmbeddedResource Include="Resources\Icons\cr3.ico" />
+		<EmbeddedResource Include="Resources\Icons\css.ico" />
 		<EmbeddedResource Include="Resources\Icons\flac.ico" />
 		<EmbeddedResource Include="Resources\Icons\flv.ico" />
+		<EmbeddedResource Include="Resources\Icons\html.ico" />
+		<EmbeddedResource Include="Resources\Icons\js.ico" />
+		<EmbeddedResource Include="Resources\Icons\json.ico" />
+		<EmbeddedResource Include="Resources\Icons\less.ico" />
 		<EmbeddedResource Include="Resources\Icons\m4a.ico" />
 		<EmbeddedResource Include="Resources\Icons\m4v.ico" />
 		<EmbeddedResource Include="Resources\Icons\markdown.ico" />
@@ -30,12 +36,14 @@
 		<EmbeddedResource Include="Resources\Icons\mpeg.ico" />
 		<EmbeddedResource Include="Resources\Icons\ogg.ico" />
 		<EmbeddedResource Include="Resources\Icons\opus.ico" />
+		<EmbeddedResource Include="Resources\Icons\php.ico" />
 		<EmbeddedResource Include="Resources\Icons\ts.ico" />
 		<EmbeddedResource Include="Resources\Icons\video_generic.ico" />
 		<EmbeddedResource Include="Resources\Icons\wav.ico" />
 		<EmbeddedResource Include="Resources\Icons\webm.ico" />
 		<EmbeddedResource Include="Resources\Icons\wma.ico" />
 		<EmbeddedResource Include="Resources\Icons\wmv.ico" />
+		<EmbeddedResource Include="Resources\Icons\xml.ico" />
 		<EmbeddedResource Include="Resources\Programs\SetUserFTA.exe" LogicalName="SetUserFTA.exe" />
 	</ItemGroup>
 
